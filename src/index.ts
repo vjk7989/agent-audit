@@ -7,7 +7,7 @@ export {
   SEVERITY_ORDER,
   type MatchOptions,
 } from "./match.js";
-export { renderJson, renderText } from "./report.js";
+export { renderJson, renderSummary, renderText } from "./report.js";
 export type {
   Advisory,
   Chain,

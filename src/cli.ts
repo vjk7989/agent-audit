@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { loadAdvisories } from "./db.js";
 import { scanLockfile } from "./lockfiles.js";
 import { matchAdvisories } from "./match.js";
-import { renderJson, renderText } from "./report.js";
+import { renderJson, renderSummary, renderText } from "./report.js";
 import type { Chain, Role, ScanResult, Severity } from "./types.js";
 
 const HELP = `
@@ -23,6 +23,7 @@ Arguments
 
 Options
   --json                  Emit machine-readable JSON
+  --summary               Emit a compact one-line-per-finding view (not with --json)
   --role <role>           Only report issues affecting this role.
                           One of: client, facilitator, resource-server
   --chain <chain>         Only report issues affecting this chain.
@@ -44,11 +45,13 @@ Examples
   agent-audit ./my-agent --role client
   agent-audit --only-hidden --json
   agent-audit ./my-agent --chain solana
+  agent-audit --summary
 `;
 
 interface Options {
   path: string;
   json: boolean;
+  summary: boolean;
   role?: Role;
   chain?: Chain;
   minSeverity?: Severity;
@@ -89,6 +92,7 @@ function parseArgs(argv: string[]): Options {
   const options: Options = {
     path: process.cwd(),
     json: false,
+    summary: false,
     onlyHidden: false,
     exitZero: false,
   };
@@ -109,6 +113,9 @@ function parseArgs(argv: string[]): Options {
         break;
       case "--json":
         options.json = true;
+        break;
+      case "--summary":
+        options.summary = true;
         break;
       case "--only-hidden":
         options.onlyHidden = true;
@@ -149,6 +156,10 @@ function parseArgs(argv: string[]): Options {
     }
   }
 
+  if (options.json && options.summary) {
+    fail("--summary and --json cannot be combined. Use --json for machines, --summary for people.");
+  }
+
   return options;
 }
 
@@ -176,7 +187,12 @@ function main(): void {
     };
   }
 
-  process.stdout.write(options.json ? `${renderJson(result)}\n` : renderText(result));
+  const output = options.json
+    ? `${renderJson(result)}\n`
+    : options.summary
+      ? `${renderSummary(result)}\n`
+      : renderText(result);
+  process.stdout.write(output);
 
   if (!options.exitZero && result.findings.length > 0) process.exit(1);
   process.exit(0);
