@@ -40,24 +40,28 @@
     </div>
     <div class="panel">
       <h3>agent-audit</h3>
-      <!-- T9: replace this placeholder with real CLI output -->
-      <pre><code><span class="prompt">$</span> npx agent-audit
-<span class="crit">5 findings (4 critical, 1 high)</span>
-<span class="dim">5 of these are invisible to npm audit.</span></code></pre>
+      <!-- T9: real output of: node dist/cli.js test/fixtures/vulnerable-agent --summary --exit-zero -->
+      <pre><code><span class="prompt">$</span> npx agent-audit --summary
+<span class="dim">agent-audit · package-lock.json · 5 findings (4 critical, 1 high) · 5 invisible to npm audit · 0 with no fix</span>
+<span class="crit">CRITICAL</span>  @x402/core@2.22.0  AAUD-2026-0002  fix &gt;=2.23.0  hidden
+<span class="crit">CRITICAL</span>  @x402/extensions@2.22.0  AAUD-2026-0003  fix &gt;=2.23.0  hidden
+<span class="crit">CRITICAL</span>  @x402/fetch@2.22.0  AAUD-2026-0002  fix &gt;=2.23.0  hidden
+<span class="crit">CRITICAL</span>  @x402/svm@2.22.0  AAUD-2026-0001  fix &gt;=2.23.0  hidden
+<span class="high">HIGH</span>      @x402/core@2.22.0  AAUD-2026-0004  fix &gt;=2.27.0  hidden</code></pre>
     </div>
   </div>
 </section>
 
 <section id="coverage">
   <h2>Chain coverage</h2>
-  <p>Each advisory declares the chain it concerns, or none when the issue is not chain-specific.</p>
+  <p>Each advisory declares the chain it concerns. An advisory with no chain applies to all chains, and <code>--chain</code> keeps it.</p>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Chain</th><th>Package</th><th>Advisories</th></tr></thead>
     <tbody>
       <tr><td>Solana</td><td><code>@x402/svm</code></td><td><code>AAUD-2026-0001</code>, <code>GHSA-qr2g-p6q7-w82m</code></td></tr>
       <tr><td>EVM</td><td><code>@x402/evm</code></td><td><code>GHSA-5cgh-j82v-jvrj</code></td></tr>
-      <tr><td>Both (no chain declared)</td><td><code>@x402/core</code>, <code>@x402/fetch</code>, <code>@x402/axios</code>, <code>@x402/extensions</code>, legacy <code>x402</code>, <code>x402-next</code>, <code>x402-express</code>, <code>x402-hono</code></td><td><code>AAUD-2026-0002</code>, <code>AAUD-2026-0003</code>, <code>AAUD-2026-0004</code>, <code>GHSA-3j63-5h8p-gf7c</code></td></tr>
+      <tr><td>All chains (no chain declared)</td><td><code>@x402/core</code>, <code>@x402/fetch</code>, <code>@x402/axios</code>, <code>@x402/extensions</code>, legacy <code>x402</code>, <code>x402-next</code>, <code>x402-express</code>, <code>x402-hono</code></td><td><code>AAUD-2026-0002</code>, <code>AAUD-2026-0003</code>, <code>AAUD-2026-0004</code>, <code>GHSA-3j63-5h8p-gf7c</code></td></tr>
     </tbody>
   </table>
   </div>
@@ -68,6 +72,28 @@
     <h2>No fix available: GHSA-5cgh-j82v-jvrj</h2>
     <p>The TypeScript, Go and Python batch-settlement voucher verifiers accept ECDSA signatures that the on-chain <code>x402BatchSettlement</code> contract rejects (high-s, <code>v</code> = 0/1). The voucher verifies, the resource is served, and the later claim reverts. Severity Moderate, CVSS 3.1 5.4, CWE-347, no CVE.</p>
     <p>It affects <code>@x402/evm</code> <code>&gt;= 2.12.0, &lt;= 2.31.0</code>. <strong>Patched: None.</strong> <code>2.31.0</code> is the latest release on npm (published 2026-11-12), so a fully up-to-date install is still vulnerable. <code>npm audit</code> cannot see it.</p>
+    <!-- T9: real output of: node dist/cli.js test/fixtures/evm-agent --exit-zero -->
+    <pre><code><span class="dim">agent-audit · package-lock.json · 4 packages · 7 advisories</span>
+
+1. <span class="high">MODERATE</span> @x402/evm@2.31.0 GHSA-5cgh-j82v-jvrj
+   batch-settlement: voucher verifiers accept signatures x402BatchSettlement
+   cannot recover (high-s, v = 0/1)
+   Impact:   Batch-settlement vouchers with non-canonical signatures verify
+             off-chain but revert on-chain, so the resource server serves the
+             resource and loses the payment.
+   Chain:    EVM
+   Fix:      <span class="crit">No fix available — mitigation required</span>
+   Mitigate: No upstream fix or workaround is published. This tool's own
+             guidance: reject non-canonical ECDSA signatures before accepting a
+             voucher, by requiring s &lt;= n/2 and v in {27, 28}. Upstream added
+             this check for EIP-3009 in @x402/evm 2.29.0 but not for
+             batch-settlement vouchers.
+   Hidden:   npm audit does not report this (advisory not propagated)
+   Source:   advisory
+
+<span class="dim">────────────────────────────────────────────────────────────────────────</span>
+<span class="high">1 finding (1 moderate)</span>
+1 invisible to npm audit · 1 with no fix</code></pre>
     <p>Mitigation (this tool's own guidance, not an upstream workaround): reject non-canonical ECDSA signatures before accepting a voucher, requiring <code>s &lt;= n/2</code> and <code>v</code> in {27, 28}.</p>
   </div>
 </section>
@@ -87,6 +113,8 @@
   <pre><code>npx agent-audit                          <span class="dim"># scan the current directory</span>
 agent-audit ./my-agent               <span class="dim"># scan a specific project</span>
 agent-audit --role client            <span class="dim"># only issues affecting payment clients</span>
+agent-audit --chain evm              <span class="dim"># only issues affecting this chain: evm or solana</span>
+agent-audit --summary                <span class="dim"># one line per finding</span>
 agent-audit --min-severity critical  <span class="dim"># only the worst</span>
 agent-audit --only-hidden            <span class="dim"># only what npm audit cannot see</span>
 agent-audit --json                   <span class="dim"># machine-readable output</span></code></pre>
