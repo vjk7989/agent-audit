@@ -31,6 +31,6 @@
     "npm_audit_detects": false,
     "roles": ["client"],
     "impact_summary": "A hostile server can relay another site's login challenge and take over the agent's session there.",
-    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected package and fix version from The Hacker News (23 Oct 2026): '@x402/extensions 2.23.0 or later for SIWx'. No GHSA was published for this issue."
+    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected package and fix version from The Hacker News (23 Oct 2026): '@x402/extensions 2.23.0 or later for SIWx'. No GHSA was published for this issue. V12 explicitly names Ethereum ('On Ethereum, it builds a Sign-In with Ethereum message'), so this entry is deliberately chain-agnostic and applies to both EVM and Solana."
   }
 }

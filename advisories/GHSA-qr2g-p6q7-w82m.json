@@ -28,6 +28,7 @@
     "has_upstream_advisory": true,
     "npm_audit_detects": true,
     "roles": ["facilitator"],
+    "chains": ["solana"],
     "impact_summary": "Solana facilitators on a vulnerable SDK version mis-handle payment validation.",
     "provenance": "Mirrored verbatim from the GitHub Advisory Database via api.github.com/advisories, retrieved 20 Nov 2026. Version ranges are as published upstream. Included so the report shows a complete picture alongside the derived entries."
   }

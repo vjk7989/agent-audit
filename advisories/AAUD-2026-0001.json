@@ -34,6 +34,7 @@
     "has_upstream_advisory": false,
     "npm_audit_detects": false,
     "roles": ["facilitator", "resource-server"],
+    "chains": ["solana"],
     "impact_summary": "A payer can take the paid resource without transferring any tokens.",
     "provenance": "Vulnerability detail and the instruction-discriminator mechanism are from V12's published research (v12.sh/blog/x402, 22 Oct 2026), which states the three critical findings were reported 12 Aug 2026 and fixed by 20 Aug 2026. The affected range 2.0.0-2.22.0 with the fix landing in 2.23.0 is as reported by The Hacker News (23 Oct 2026). No GHSA was published for this issue. Distinct from GHSA-qr2g-p6q7-w82m, which was published 7 Mar 2026 and fixed in 2.6.0; the ranges overlap below 2.6.0 but the issues are separate."
   }

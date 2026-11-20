@@ -43,6 +43,6 @@
     "npm_audit_detects": false,
     "roles": ["client"],
     "impact_summary": "A hostile API can drain the agent wallet's full balance of any supported token.",
-    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected packages and the 2.23.0 fix version are as reported by The Hacker News (23 Oct 2026), which states '@x402/fetch and @x402/axios 2.23.0 or later (pulls in matching @x402/core)'. @x402/core is included because the shared client logic and the spend-control defaults ship there. No GHSA was published for this issue."
+    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected packages and the 2.23.0 fix version are as reported by The Hacker News (23 Oct 2026), which states '@x402/fetch and @x402/axios 2.23.0 or later (pulls in matching @x402/core)'. @x402/core is included because the shared client logic and the spend-control defaults ship there. No GHSA was published for this issue. EVM applicability is an inference from the @x402/evm 2.23.0 changelog entry adding spendControls; V12 does not state a chain, so this entry is deliberately chain-agnostic."
   }
 }
