@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.6.0",
+  "id": "GHSA-5cgh-j82v-jvrj",
+  "aliases": [],
+  "published": "2026-11-18T00:00:00Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "batch-settlement: voucher verifiers accept signatures x402BatchSettlement cannot recover (high-s, v = 0/1)",
+  "details": "Mirrored from the repository-level advisory in x402-foundation/x402. Severity Moderate, CVSS 3.1 base score 5.4 (CWE-347). No CVE is assigned.\n\nThe TypeScript, Go and Python batch-settlement voucher verifiers accept ECDSA voucher signatures that the on-chain `x402BatchSettlement` contract rejects. The contract rejects `s > n/2` (`ECDSAInvalidSignatureS`) and `v` not in {27, 28} (`ECDSAInvalidSignature`). The voucher verifies, the resource is served, and the later claim reverts. Upstream notes that current usage of the scheme is low. ERC-1271 payers are unaffected.\n\n## Patches\n\nNo patched version exists. Upstream lists the patched version as None.\n\nOnly the npm package `@x402/evm` is matched by this tool.",
+  "severity": [{ "type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:L" }],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/evm" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "2.12.0" }, { "last_affected": "2.31.0" }] }]
+    }
+  ],
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://github.com/x402-foundation/x402/security/advisories/GHSA-5cgh-j82v-jvrj"
+    },
+    { "type": "PACKAGE", "url": "https://www.npmjs.com/package/@x402/evm" }
+  ],
+  "database_specific": {
+    "severity": "MODERATE",
+    "source": "advisory",
+    "confidence": "high",
+    "has_upstream_advisory": true,
+    "npm_audit_detects": false,
+    "chains": ["evm"],
+    "roles": ["facilitator", "resource-server"],
+    "impact_summary": "Batch-settlement vouchers with non-canonical signatures verify off-chain but revert on-chain, so the resource server serves the resource and loses the payment.",
+    "mitigation": "No upstream fix or workaround is published. This tool's own guidance: reject non-canonical ECDSA signatures before accepting a voucher, by requiring s <= n/2 and v in {27, 28}. Upstream added this check for EIP-3009 in @x402/evm 2.29.0 but not for batch-settlement vouchers.",
+    "provenance": "Range mirrored verbatim from the published repository-level advisory (introduced 2.12.0, last affected 2.31.0, patched None). The advisory never propagated: OSV returns no advisories for @x402/evm and GitHub's global advisory API returns 404 for this ID, so npm audit cannot see it. @x402/evm 2.31.0 was the latest npm release on 20 Nov 2026, so the upper bound covers the current release. The range has no fixed event; a release newer than 2.31.0 would read as clean and requires re-verification against upstream. The mitigation text is this tool's own guidance, not an upstream workaround."
+  }
+}

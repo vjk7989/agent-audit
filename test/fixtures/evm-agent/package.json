@@ -1,0 +1,12 @@
+{
+  "name": "evm-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo fixture: a fully up-to-date EVM agent that is still vulnerable (no patched @x402/evm exists).",
+  "dependencies": {
+    "@x402/core": "2.31.0",
+    "@x402/extensions": "2.31.0",
+    "@x402/fetch": "2.31.0",
+    "@x402/evm": "2.31.0"
+  }
+}
