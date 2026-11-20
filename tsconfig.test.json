@@ -1,0 +1,10 @@
+{
+  "//": "Typecheck-only config covering tests as well as src. The base tsconfig excludes test/ because it drives the build (rootDir: src), so a signature change could break a test call site without typecheck noticing. That happened once: two tests kept passing while calling fixedVersionFor with a stale arity, asserting undefined and receiving undefined for the wrong reason.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
