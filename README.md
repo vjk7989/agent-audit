@@ -197,6 +197,7 @@ Stated plainly, because a security tool should not oversell itself:
 - **npm only.** The same vulnerabilities affect the Python and Go x402 SDKs. Not yet covered.
 - **Version matching, not code analysis.** If you have patched a vulnerability yourself without upgrading, this will still flag you. If you call a vulnerable API in a way that is not exploitable, it will still flag you.
 - **`spendControls: false` is undetectable here.** `AAUD-2026-0002` is only *mitigated* by upgrading if you leave the new defaults on. A lockfile cannot show that. For source-level checks, [x402guard](https://github.com/dario933/x402guard) is complementary.
+- **A prerelease at the lower boundary reads as unaffected.** `2.12.0-beta.1` does not match a range introduced at `2.12.0`, because SemVer orders prereleases before the release. This follows the OSV spec and the `semver` library, but a beta cut from the branch that introduced a flaw probably contains it. Check prereleases by hand.
 - **The database is small and hand-curated.** It covers what has been published about x402. V12's 13 high and 9 medium/low findings are not described publicly, so they are not here.
 - **Not affiliated** with the x402 Foundation, Coinbase, V12 or the Solana Foundation.
 

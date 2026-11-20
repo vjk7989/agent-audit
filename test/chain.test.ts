@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchAdvisories } from "../src/match.js";
+import { fixedVersionFor, matchAdvisories } from "../src/match.js";
 import type { Advisory, Chain, ScanTarget } from "../src/types.js";
 
 function adv(id: string, chains?: Chain[], events: Record<string, string>[] = [{ introduced: "0" }]): Advisory {
@@ -81,5 +81,50 @@ describe("last_affected range with no fix", () => {
     const [finding] = matchAdvisories(target("2.20.0"), range).findings;
     expect(finding).toBeDefined();
     expect(finding?.fixedIn).toBeUndefined();
+  });
+});
+
+describe("fixedVersionFor picks the matching range", () => {
+  const twoRanges: Advisory = {
+    ...adv("TWO"),
+    affected: [
+      {
+        package: { ecosystem: "npm", name: "pkg" },
+        ranges: [
+          { type: "SEMVER", events: [{ introduced: "1.0.0" }, { fixed: "1.5.0" }] },
+          { type: "SEMVER", events: [{ introduced: "2.0.0" }, { last_affected: "2.31.0" }] },
+        ],
+      },
+    ],
+  };
+
+  it("returns undefined when the matching range has no fix", () => {
+    expect(fixedVersionFor(twoRanges, "pkg", "2.20.0")).toBeUndefined();
+  });
+
+  it("returns the fix of the range that matched", () => {
+    expect(fixedVersionFor(twoRanges, "pkg", "1.2.0")).toBe("1.5.0");
+  });
+
+  it("ignores a fix from another ecosystem", () => {
+    const mixed: Advisory = {
+      ...adv("MIXED"),
+      affected: [
+        {
+          package: { ecosystem: "PyPI", name: "pkg" },
+          ranges: [{ type: "SEMVER", events: [{ introduced: "0" }, { fixed: "9.9.9" }] }],
+        },
+        {
+          package: { ecosystem: "npm", name: "pkg" },
+          ranges: [{ type: "SEMVER", events: [{ introduced: "0" }] }],
+        },
+      ],
+    };
+    expect(fixedVersionFor(mixed, "pkg", "1.0.0")).toBeUndefined();
+  });
+
+  it("keeps single-range behaviour", () => {
+    const single = adv("ONE", undefined, [{ introduced: "1.0.0" }, { fixed: "1.5.0" }]);
+    expect(fixedVersionFor(single, "pkg", "1.2.0")).toBe("1.5.0");
   });
 });

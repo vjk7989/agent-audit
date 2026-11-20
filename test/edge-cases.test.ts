@@ -497,11 +497,12 @@ describe("fixedVersionFor", () => {
         ],
       },
     ]);
-    expect(fixedVersionFor(a, "pkg")).toBeUndefined();
+    // 2.20.0 is inside the matched range, which carries no `fixed` event.
+    expect(fixedVersionFor(a, "pkg", "2.20.0")).toBeUndefined();
   });
 
   it("returns undefined for a package the advisory does not name", () => {
-    expect(fixedVersionFor(advisory("A"), "not-this-one")).toBeUndefined();
+    expect(fixedVersionFor(advisory("A"), "not-this-one", "1.0.0")).toBeUndefined();
   });
 
   it("reads the fix from the entry for the requested package only", () => {
@@ -515,8 +516,11 @@ describe("fixedVersionFor", () => {
         ranges: [{ type: "SEMVER", events: [{ introduced: "0" }, { fixed: "2.2.0" }] }],
       },
     ]);
-    expect(fixedVersionFor(a, "alpha")).toBe("1.1.0");
-    expect(fixedVersionFor(a, "beta")).toBe("2.2.0");
+    // 1.0.0 sits inside both ranges (each is introduced:"0" .. fixed), so the
+    // assertions below are unchanged in meaning: asking for one package must
+    // never return the other package's fix.
+    expect(fixedVersionFor(a, "alpha", "1.0.0")).toBe("1.1.0");
+    expect(fixedVersionFor(a, "beta", "1.0.0")).toBe("2.2.0");
   });
 });
 

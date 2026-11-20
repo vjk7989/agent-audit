@@ -55,14 +55,22 @@ export function isAffectedByRange(version: string, range: OsvRange): boolean {
   return affected;
 }
 
-/** The first `fixed` version named for a package in an advisory, if any. */
-export function fixedVersionFor(advisory: Advisory, packageName: string): string | undefined {
+/**
+ * The `fixed` version of the range that actually matches `version`, if any.
+ * Scanning other ranges would print an upgrade target for a different release line, and
+ * would hide the "no fix" signal this tool relies on.
+ */
+export function fixedVersionFor(
+  advisory: Advisory,
+  packageName: string,
+  version: string,
+): string | undefined {
   for (const affected of advisory.affected) {
+    if (affected.package.ecosystem !== "npm") continue;
     if (affected.package.name !== packageName) continue;
     for (const range of affected.ranges ?? []) {
-      for (const event of range.events) {
-        if (event.fixed) return event.fixed;
-      }
+      if (!isAffectedByRange(version, range)) continue;
+      return range.events.find((event) => event.fixed)?.fixed;
     }
   }
   return undefined;
@@ -117,7 +125,7 @@ export function matchAdvisories(
         continue;
       }
 
-      const fixedIn = fixedVersionFor(advisory, pkg.name);
+      const fixedIn = fixedVersionFor(advisory, pkg.name, pkg.version);
       findings.push(fixedIn ? { advisory, package: pkg, fixedIn } : { advisory, package: pkg });
     }
   }
