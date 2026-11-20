@@ -1,6 +1,7 @@
 import semver from "semver";
 import type {
   Advisory,
+  Chain,
   Finding,
   InstalledPackage,
   OsvRange,
@@ -84,6 +85,8 @@ function advisoryHits(advisory: Advisory, pkg: InstalledPackage): boolean {
 export interface MatchOptions {
   /** Only report advisories relevant to this role. */
   role?: Role;
+  /** Only report advisories relevant to this chain. Chain-agnostic advisories always pass. */
+  chain?: Chain;
   /** Drop findings below this severity. */
   minSeverity?: Severity;
 }
@@ -102,6 +105,9 @@ export function matchAdvisories(
       const spec = advisory.database_specific;
 
       if (options.role && spec.roles?.length && !spec.roles.includes(options.role)) {
+        continue;
+      }
+      if (options.chain && spec.chains?.length && !spec.chains.includes(options.chain)) {
         continue;
       }
       if (
@@ -145,5 +151,6 @@ export function matchAdvisories(
     invisibleToNpmAudit: deduped.filter((f) => !f.advisory.database_specific.npm_audit_detects),
     advisoriesLoaded: advisories.length,
     packagesScanned: target.packages.length,
+    ...(options.chain ? { chain: options.chain } : {}),
   };
 }

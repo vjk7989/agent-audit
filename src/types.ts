@@ -62,6 +62,8 @@ export type Confidence = "high" | "medium" | "low";
 /** Which party in an x402 exchange is exposed. Used to suppress irrelevant findings. */
 export type Role = "client" | "facilitator" | "resource-server";
 
+export type Chain = "evm" | "solana";
+
 export interface AgentAuditSpecific {
   severity: Severity;
   source: EntrySource;
@@ -75,6 +77,10 @@ export interface AgentAuditSpecific {
   npm_audit_detects: boolean;
   /** Which roles are exposed. Empty/undefined means "all". */
   roles?: Role[];
+  /** Which chains are exposed. Empty/undefined means chain-agnostic (all chains). */
+  chains?: Chain[];
+  /** One line a developer can act on when no fixed version exists. */
+  mitigation?: string;
   /** One line a developer can act on. */
   impact_summary: string;
   /** Free-text note on how the ranges were established. Required for `derived` entries. */
@@ -121,7 +127,7 @@ export interface ScanTarget {
 export interface Finding {
   advisory: Advisory;
   package: InstalledPackage;
-  /** The first version that fixes this, if the advisory names one. */
+  /** The first version that fixes this. Absent means no fix is available. */
   fixedIn?: string;
 }
 
@@ -132,4 +138,6 @@ export interface ScanResult {
   invisibleToNpmAudit: Finding[];
   advisoriesLoaded: number;
   packagesScanned: number;
+  /** The chain filter that was applied, if any. */
+  chain?: Chain;
 }

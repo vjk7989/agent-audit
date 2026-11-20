@@ -10,6 +10,7 @@ export {
 export { renderJson, renderText } from "./report.js";
 export type {
   Advisory,
+  Chain,
   Confidence,
   EntrySource,
   Finding,
