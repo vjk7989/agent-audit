@@ -35,41 +35,106 @@ function chainLabel(chains: Chain[] | undefined): string {
   return chains && chains.length > 0 ? chains.map((x) => CHAIN_LABEL[x]).join(", ") : "all chains";
 }
 
+const INDENT = "   ";
+const LABEL_WIDTH = 10;
+const WIDTH = 80;
+
+// Free text can run to several hundred characters, so it wraps under the label column.
+function wrap(text: string, width: number): string[] {
+  const out: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (line && line.length + 1 + word.length > width) {
+      out.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+function field(label: string, text: string, style: (s: string) => string = (s) => s): string[] {
+  const pad = " ".repeat(INDENT.length + LABEL_WIDTH);
+  return wrap(text, WIDTH - pad.length).map(
+    (l, i) => `${i === 0 ? `${INDENT}${c.dim(`${label}:`.padEnd(LABEL_WIDTH))}` : pad}${style(l)}`,
+  );
+}
+
 function renderFinding(finding: Finding, index: number): string {
   const { advisory, package: pkg, fixedIn } = finding;
   const spec = advisory.database_specific;
   const lines: string[] = [];
 
   lines.push(
-    `${c.dim(`${index + 1}.`)} ${severityTag(spec.severity)} ${c.bold(`${pkg.name}@${pkg.version}`)}`,
+    `${c.dim(`${index + 1}.`)} ${severityTag(spec.severity)} ${c.bold(`${pkg.name}@${pkg.version}`)} ${c.dim(advisory.id)}`,
   );
-  lines.push(`   ${advisory.summary}`);
-  lines.push(`   ${c.dim("Impact:")} ${spec.impact_summary}`);
-  lines.push(`   ${c.dim("Chain:")}  ${chainLabel(spec.chains)}`);
+  lines.push(...wrap(advisory.summary, WIDTH - INDENT.length).map((l) => `${INDENT}${l}`));
+  lines.push(...field("Impact", spec.impact_summary));
+  lines.push(...field("Chain", chainLabel(spec.chains)));
 
   if (fixedIn) {
-    lines.push(`   ${c.dim("Fix:")}    upgrade ${c.bold(pkg.name)} to ${c.green(`>=${fixedIn}`)}`);
+    lines.push(...field("Fix", `upgrade ${pkg.name} to >=${fixedIn}`, c.green));
   } else {
-    lines.push(
-      `   ${c.dim("Fix:")}    ${c.red("No fix available — mitigation required")}${
-        spec.mitigation ? `: ${spec.mitigation}` : ""
-      }`,
-    );
+    lines.push(...field("Fix", "No fix available — mitigation required", c.red));
+    if (spec.mitigation) lines.push(...field("Mitigate", spec.mitigation));
   }
 
   if (!spec.npm_audit_detects) {
     lines.push(
-      `   ${c.magenta("⚠ npm audit does not report this")} ${c.dim(
-        spec.has_upstream_advisory ? "(advisory not propagated)" : "(no advisory published)",
-      )}`,
+      ...field(
+        "Hidden",
+        `npm audit does not report this (${
+          spec.has_upstream_advisory ? "advisory not propagated" : "no advisory published"
+        })`,
+        c.magenta,
+      ),
     );
   }
 
-  const confidence =
-    spec.confidence === "high" ? "" : c.dim(` · confidence: ${spec.confidence}`);
-  lines.push(`   ${c.dim(`${advisory.id} · source: ${spec.source}${confidence ? "" : ""}`)}${confidence}`);
+  const confidence = spec.confidence === "high" ? "" : ` · confidence: ${spec.confidence}`;
+  lines.push(...field("Source", `${spec.source}${confidence}`));
 
   return lines.join("\n");
+}
+
+function severityCounts(findings: Finding[]): string {
+  const counts = findings.reduce<Record<string, number>>((acc, f) => {
+    const s = f.advisory.database_specific.severity;
+    acc[s] = (acc[s] ?? 0) + 1;
+    return acc;
+  }, {});
+  return (["CRITICAL", "HIGH", "MODERATE", "LOW"] as Severity[])
+    .filter((s) => counts[s])
+    .map((s) => `${counts[s]} ${s.toLowerCase()}`)
+    .join(", ");
+}
+
+const plural = (n: number) => `${n} finding${n === 1 ? "" : "s"}`;
+
+export function renderSummary(result: ScanResult): string {
+  const { findings, invisibleToNpmAudit, target } = result;
+  const noFix = findings.filter((f) => !f.fixedIn).length;
+  const counts = findings.length > 0 ? ` (${severityCounts(findings)})` : "";
+  const out = [
+    `agent-audit · ${target.lockfile} · ${plural(findings.length)}${counts} · ${invisibleToNpmAudit.length} invisible to npm audit · ${noFix} with no fix`,
+  ];
+  for (const f of findings) {
+    const spec = f.advisory.database_specific;
+    out.push(
+      [
+        severityTag(spec.severity),
+        `${f.package.name}@${f.package.version}`,
+        f.advisory.id,
+        f.fixedIn ? `fix >=${f.fixedIn}` : "no fix",
+        spec.npm_audit_detects ? "" : "hidden",
+      ]
+        .filter(Boolean)
+        .join("  "),
+    );
+  }
+  return out.join("\n");
 }
 
 export function renderText(result: ScanResult): string {
@@ -101,39 +166,17 @@ export function renderText(result: ScanResult): string {
     out.push("");
   }
 
-  const counts = findings.reduce<Record<string, number>>((acc, f) => {
-    const s = f.advisory.database_specific.severity;
-    acc[s] = (acc[s] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const summary = (["CRITICAL", "HIGH", "MODERATE", "LOW"] as Severity[])
-    .filter((s) => counts[s])
-    .map((s) => `${counts[s]} ${s.toLowerCase()}`)
-    .join(", ");
-
-  out.push(c.bold(`${findings.length} finding${findings.length === 1 ? "" : "s"} (${summary})`));
+  out.push(c.dim("─".repeat(60)));
+  out.push(c.bold(`${plural(findings.length)} (${severityCounts(findings)})`));
 
   const noFixCount = findings.filter((f) => !f.fixedIn).length;
-  if (noFixCount > 0) {
-    out.push(
-      c.red(
-        c.bold(`${noFixCount} ${noFixCount === 1 ? "has" : "have"} no fix available — mitigation required.`),
-      ),
-    );
-  }
-
-  if (invisibleToNpmAudit.length > 0) {
-    out.push(
-      c.magenta(
-        c.bold(
-          `${invisibleToNpmAudit.length} of these ${
-            invisibleToNpmAudit.length === 1 ? "is" : "are"
-          } invisible to npm audit.`,
-        ),
-      ),
-    );
-  }
+  const tally = [
+    invisibleToNpmAudit.length > 0
+      ? c.magenta(c.bold(`${invisibleToNpmAudit.length} invisible to npm audit`))
+      : "",
+    noFixCount > 0 ? c.red(c.bold(`${noFixCount} with no fix`)) : "",
+  ].filter(Boolean);
+  if (tally.length > 0) out.push(tally.join(c.dim(" · ")));
 
   out.push("");
   return out.join("\n");
