@@ -1,4 +1,4 @@
-import type { Finding, ScanResult, Severity } from "./types.js";
+import type { Chain, Finding, ScanResult, Severity } from "./types.js";
 
 const useColor =
   process.env["NO_COLOR"] === undefined &&
@@ -29,6 +29,12 @@ function severityTag(severity: Severity): string {
   return SEVERITY_LABEL[severity](c.bold(severity.padEnd(8)));
 }
 
+const CHAIN_LABEL: Record<Chain, string> = { evm: "EVM", solana: "Solana" };
+
+function chainLabel(chains: Chain[] | undefined): string {
+  return chains && chains.length > 0 ? chains.map((x) => CHAIN_LABEL[x]).join(", ") : "all chains";
+}
+
 function renderFinding(finding: Finding, index: number): string {
   const { advisory, package: pkg, fixedIn } = finding;
   const spec = advisory.database_specific;
@@ -39,9 +45,16 @@ function renderFinding(finding: Finding, index: number): string {
   );
   lines.push(`   ${advisory.summary}`);
   lines.push(`   ${c.dim("Impact:")} ${spec.impact_summary}`);
+  lines.push(`   ${c.dim("Chain:")}  ${chainLabel(spec.chains)}`);
 
   if (fixedIn) {
     lines.push(`   ${c.dim("Fix:")}    upgrade ${c.bold(pkg.name)} to ${c.green(`>=${fixedIn}`)}`);
+  } else {
+    lines.push(
+      `   ${c.dim("Fix:")}    ${c.red("No fix available — mitigation required")}${
+        spec.mitigation ? `: ${spec.mitigation}` : ""
+      }`,
+    );
   }
 
   if (!spec.npm_audit_detects) {
@@ -66,13 +79,19 @@ export function renderText(result: ScanResult): string {
   out.push("");
   out.push(
     `${c.bold("agent-audit")} ${c.dim(
-      `· ${target.lockfile} · ${result.packagesScanned} packages · ${result.advisoriesLoaded} advisories`,
+      `· ${target.lockfile} · ${result.packagesScanned} packages · ${result.advisoriesLoaded} advisories${
+        result.chain ? ` · chain: ${CHAIN_LABEL[result.chain]}` : ""
+      }`,
     )}`,
   );
   out.push("");
 
   if (findings.length === 0) {
-    out.push(`${c.green("✓")} No known vulnerable agent-payment SDK versions found.`);
+    out.push(
+      result.chain
+        ? `${c.green("✓")} No known vulnerable agent-payment SDK versions found for chain: ${CHAIN_LABEL[result.chain]} (chain-agnostic advisories included; other chains were not checked).`
+        : `${c.green("✓")} No known vulnerable agent-payment SDK versions found.`,
+    );
     out.push("");
     return out.join("\n");
   }
@@ -94,6 +113,15 @@ export function renderText(result: ScanResult): string {
     .join(", ");
 
   out.push(c.bold(`${findings.length} finding${findings.length === 1 ? "" : "s"} (${summary})`));
+
+  const noFixCount = findings.filter((f) => !f.fixedIn).length;
+  if (noFixCount > 0) {
+    out.push(
+      c.red(
+        c.bold(`${noFixCount} ${noFixCount === 1 ? "has" : "have"} no fix available — mitigation required.`),
+      ),
+    );
+  }
 
   if (invisibleToNpmAudit.length > 0) {
     out.push(
@@ -118,7 +146,9 @@ export function renderJson(result: ScanResult): string {
       lockfilePath: result.target.path,
       packagesScanned: result.packagesScanned,
       advisoriesLoaded: result.advisoriesLoaded,
+      chain: result.chain ?? null,
       findingCount: result.findings.length,
+      noFixCount: result.findings.filter((f) => !f.fixedIn).length,
       invisibleToNpmAuditCount: result.invisibleToNpmAudit.length,
       findings: result.findings.map((f) => ({
         id: f.advisory.id,
@@ -133,6 +163,8 @@ export function renderJson(result: ScanResult): string {
         npmAuditDetects: f.advisory.database_specific.npm_audit_detects,
         hasUpstreamAdvisory: f.advisory.database_specific.has_upstream_advisory,
         roles: f.advisory.database_specific.roles ?? [],
+        chains: f.advisory.database_specific.chains ?? [],
+        mitigation: f.advisory.database_specific.mitigation ?? null,
         references: (f.advisory.references ?? []).map((r) => r.url),
       })),
     },
