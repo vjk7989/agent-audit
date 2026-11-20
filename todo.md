@@ -34,72 +34,95 @@ Points (S=1, M=2, L=3): D1 = 2+1+1+2 = 6, D2 = 1+2+2 = 5, D3 = 2+3+1 = 6.
 
 ## Sub-tasks
 
-- [~] T1 · agent-audit · Chain type, chain filter in matcher, no-fix contract
+- [x] T1 · agent-audit · Chain type, chain filter in matcher, no-fix contract  (84e1713)
   files: src/types.ts, src/match.ts, test/chain.test.ts          size: M      dev: D1
   AC: (planner to fill; see ADR-1, ADR-2, ADR-3)
   verify: npm run typecheck && npm test
   deps: none        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [~] T2 · agent-audit · Chain tags and EVM notes on existing advisories
+- [x] T2 · agent-audit · Chain tags and EVM notes on existing advisories  (48c93f7)
   files: advisories/AAUD-2026-000{1,2,3}.json, advisories/GHSA-qr2g-p6q7-w82m.json          size: S      dev: D2
   AC: (planner to fill; see ADR-1, ADR-5)
   verify: npm test
   deps: none        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [~] T3 · agent-audit · GHSA-5cgh-j82v-jvrj entry, EVM fixture, data invariants
+- [x] T3 · agent-audit · GHSA-5cgh-j82v-jvrj entry, EVM fixture, data invariants  (3392c0a)
   files: advisories/GHSA-5cgh-j82v-jvrj.json, test/fixtures/evm-agent/*, test/evm-advisory.test.ts          size: M      dev: D3
   AC: (planner to fill; see ADR-3, ADR-4, ADR-6)
   verify: npm test
   deps: none        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T4 · agent-audit · No-fix, mitigation and chain in report output
+- [x] T4 · agent-audit · No-fix, mitigation and chain in report output  (334a758)
   files: src/report.ts, test/report.test.ts          size: M      dev: D2
   AC: (planner to fill; see ADR-3, ADR-7)
   verify: npm run typecheck && npm test
   deps: T1, T2, T3 (GATE 1)        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T5 · agent-audit · `--chain` flag
+- [x] T5 · agent-audit · `--chain` flag  (ebd37d2)
   files: src/cli.ts          size: S      dev: D1
   AC: (planner to fill; see ADR-2, ADR-9)
   verify: npm run build && node dist/cli.js (cli.ts runs main() on import; not unit-testable)
   deps: T1 (GATE 1)        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T6 · agent-audit · Static landing page
+- [x] T6 · agent-audit · Static landing page  (a706553)
   files: docs/*          size: L      dev: D3
   AC: (planner to fill; see ADR-11)
   verify: (planner to fill; grep check on docs/ content)
   deps: GATE 1        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T7 · agent-audit · Credible layout and compact summary renderer
+- [x] T7 · agent-audit · Credible layout and compact summary renderer  (e508642)
   files: src/report.ts, test/report.test.ts          size: M      dev: D2
   AC: (planner to fill)
   verify: npm run typecheck && npm test
   deps: T4        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T8 · agent-audit · `--summary` flag and library export
+- [x] T8 · agent-audit · `--summary` flag and library export  (e67227d)
   files: src/cli.ts, src/index.ts          size: S      dev: D1
   AC: (planner to fill; see ADR-7, ADR-8)
   verify: npm run build && node dist/cli.js
   deps: T7 (GATE 2)        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T9 · agent-audit · Replace site terminal panels with real v0.2 output
+- [x] T9 · agent-audit · Replace site terminal panels with real v0.2 output  (8c8fc9b)
   files: docs/*          size: S      dev: D3
   AC: (planner to fill; see ADR-11)
   verify: (planner to fill)
   deps: T8 (GATE 3)        tools: graphify; graph skipped: tool not available
   worktree: main
 
-- [ ] T10 · agent-audit · README and version 0.2.0
+- [x] T10 · agent-audit · README and version 0.2.0  (140f8a7)
   files: README.md, package.json, package-lock.json          size: M      dev: D1
   AC: (planner to fill)
   verify: npm run typecheck && npm test && npm run build
   deps: T8 (GATE 3)        tools: graphify; graph skipped: tool not available
   worktree: main
+
+---
+
+## Status: COMPLETE (2026-11-20)
+
+All ten sub-tasks are done and committed. Two items were added after the plan:
+
+- [x] T-fix · Correct `fixedVersionFor` to read the fix from the matched range  (d5c20c8)
+- [x] T-hard · Typecheck the test suite as well as `src`  (7c84235)
+
+Also committed: 82 edge-case tests (1e906fd), and a landing-page layout fix (26c15b8).
+
+Final gate, verified twice — once by the orchestrator and once independently by the
+Haiku test runner from a clean start:
+
+```
+npm run typecheck  pass, silent
+npx vitest run     135/135 tests, 5 files
+npm run build      pass
+```
+
+Not done, and deliberately so: nothing is pushed to a remote and nothing is published
+to npm. Both need the user's go-ahead.

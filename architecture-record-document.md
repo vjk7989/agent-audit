@@ -54,3 +54,37 @@ Consequences: No two writers share a file. A task needing a file owned by anothe
 Context: The landing page must stay credible and cheap to maintain.
 Decision: Plain HTML and CSS, no JavaScript, no external assets. Terminal panels are pasted from real CLI output (T9).
 Consequences: The page cannot drift into marketing fiction. Panels must be refreshed whenever output format changes.
+
+## ADR-12: `fixedVersionFor` is version-aware  (2026-11-20, status: accepted)
+
+**Context.** The function scanned every range of every affected entry for the package name
+and returned the first `fixed` event found, without checking which range matched the
+installed version. With the ordinary OSV shape of one range per major line, a 2.20.0
+install against ranges `[1.0.0 .. fixed 1.5.0]` and `[2.0.0 .. last_affected 2.31.0]`
+produced `fixedIn: "1.5.0"` — advice to downgrade, which fixes nothing. It also destroyed
+the no-fix signal that ADR-3 depends on, since `fixedIn === undefined` is its only marker.
+
+**Decision.** Take the installed version as a required third argument, filter on the npm
+ecosystem as `advisoryHits` already did, locate the matching range with
+`isAffectedByRange`, and return that range's `fixed` event or `undefined`. No optional
+parameter and no compatibility overload, so the broken path is unreachable.
+
+**Consequences.** A breaking signature change to an exported function, accepted because
+nothing is published and the old behaviour was wrong. Supersedes nothing; it corrects an
+implementation defect rather than a decision. Found by the edge-case test pass, which
+reported it rather than fixing it.
+
+## ADR-13: the test suite is typechecked  (2026-11-20, status: accepted)
+
+**Context.** `tsconfig.json` excludes `test/` because it drives the build with
+`rootDir: src`. So no typecheck ever saw test call sites. When ADR-12 changed an arity,
+three call sites broke; one failed loudly, but **two kept passing** because they asserted
+`undefined` and a malformed call also returns `undefined`. They were green and meaningless.
+
+**Decision.** Add `tsconfig.test.json`, a `noEmit` config covering `src` and `test`, and
+run it from `npm run typecheck` alongside the build config.
+
+**Consequences.** Typecheck is slower by roughly three seconds. In exchange, a signature
+change can no longer leave a test passing for the wrong reason. Anyone running bare
+`tsc -p tsconfig.json` still misses test files, so the npm script is the supported entry
+point and the hand-off says so.
