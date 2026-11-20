@@ -1,6 +1,6 @@
 {
   "name": "agent-audit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "npm audit for agentic payment SDKs. Finds vulnerable x402 dependencies that npm audit reports as clean.",
   "keywords": [
     "x402",
@@ -9,6 +9,8 @@
     "agentic-payments",
     "ai-agents",
     "solana",
+    "ethereum",
+    "evm",
     "vulnerability-scanner",
     "sca",
     "osv",

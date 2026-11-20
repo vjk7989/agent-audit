@@ -10,7 +10,7 @@ found 0 vulnerabilities
 
 $ npx agent-audit
 5 findings (4 critical, 1 high)
-5 of these are invisible to npm audit.
+5 invisible to npm audit
 ```
 
 Both commands, same project, same moment.
@@ -70,7 +70,9 @@ agent-audit                          # scan the current directory
 agent-audit ./my-agent               # scan a specific project
 agent-audit --role client            # only issues affecting payment clients
 agent-audit --min-severity critical  # only the worst
+agent-audit --chain solana           # only issues affecting this chain (evm or solana)
 agent-audit --only-hidden            # only what npm audit cannot see
+agent-audit --summary                # one line per finding (not with --json)
 agent-audit --json                   # machine-readable output
 ```
 
@@ -100,18 +102,25 @@ x402 vulnerabilities rarely affect everyone. A facilitator bug does not threaten
 | `facilitator` | A service that verifies and settles payments |
 | `resource-server` | An API that *charges* for access |
 
+### Chains
+
+Some vulnerabilities only exist on one chain. `@x402/svm` is Solana-only; `@x402/evm` covers Base and other EVM chains. Pass `--chain evm` or `--chain solana` to hide findings for the other chain.
+
+An advisory with no `chains` field is chain-agnostic and is shown for every chain, so the filter never hides a finding it cannot place.
+
 ---
 
 ## What it covers today
 
-| ID | Severity | Packages | Fixed in | In npm audit? |
-|---|---|---|---|---|
-| `AAUD-2026-0001` | CRITICAL | `@x402/svm` | 2.23.0 | ❌ No |
-| `AAUD-2026-0002` | CRITICAL | `@x402/fetch`, `@x402/axios`, `@x402/core` | 2.23.0 | ❌ No |
-| `AAUD-2026-0003` | CRITICAL | `@x402/extensions` | 2.23.0 | ❌ No |
-| `AAUD-2026-0004` | HIGH | `@x402/core` | 2.27.0 | ❌ No |
-| `GHSA-qr2g-p6q7-w82m` | HIGH | `@x402/svm` | 2.6.0 | ✅ Yes |
-| `GHSA-3j63-5h8p-gf7c` | HIGH | `x402`, `x402-next`, `x402-express`, `x402-hono` | 0.5.2 | ✅ Yes |
+| ID | Severity | Chain | Packages | Fixed in | In npm audit? |
+|---|---|---|---|---|---|
+| `AAUD-2026-0001` | CRITICAL | Solana | `@x402/svm` | 2.23.0 | ❌ No |
+| `AAUD-2026-0002` | CRITICAL | all | `@x402/fetch`, `@x402/axios`, `@x402/core` | 2.23.0 | ❌ No |
+| `AAUD-2026-0003` | CRITICAL | all | `@x402/extensions` | 2.23.0 | ❌ No |
+| `AAUD-2026-0004` | HIGH | all | `@x402/core` | 2.27.0 | ❌ No |
+| `GHSA-5cgh-j82v-jvrj` | MODERATE | EVM | `@x402/evm` | none — mitigation required | ❌ No |
+| `GHSA-qr2g-p6q7-w82m` | HIGH | Solana | `@x402/svm` | 2.6.0 | ✅ Yes |
+| `GHSA-3j63-5h8p-gf7c` | HIGH | all | `x402`, `x402-next`, `x402-express`, `x402-hono` | 0.5.2 | ✅ Yes |
 
 Published advisories are mirrored too, so one command gives the whole picture.
 
@@ -131,7 +140,7 @@ A security tool that invents findings is worse than no tool. Every entry declare
 
 `AAUD-2026-0004` is `medium`: the fix version (`2.27.0`) is reported, but the lower bound is an assumption, so it may over-report. The CLI prints the confidence on any entry that is not `high`, and a test enforces that every derived entry documents its provenance.
 
-`GHSA-5cgh-j82v-jvrj` is deliberately **not** shipped. It is real, but its affected package and version range could not be verified from any machine-readable source, and guessed ranges in a security scanner cause real harm.
+`GHSA-5cgh-j82v-jvrj` is shipped, with its ranges mirrored verbatim from the published advisory: `@x402/evm` from 2.12.0 through 2.31.0. The one remaining judgement call is that the range is closed at 2.31.0, the last affected version at publication. No fix exists, so a future unpatched 2.32.0 would read as clean until someone bumps the range.
 
 ---
 
@@ -154,11 +163,14 @@ Entries live in [`advisories/`](./advisories) as [OSV](https://ossf.github.io/os
     "has_upstream_advisory": false,
     "npm_audit_detects": false,
     "roles": ["facilitator", "resource-server"],
+    "chains": ["solana"],
     "impact_summary": "A payer can take the paid resource without transferring any tokens.",
     "provenance": "..."
   }
 }
 ```
+
+A `last_affected` event with no `fixed` event means no fix exists. The report then says "No fix available" and shows the advisory's `mitigation` line instead of an upgrade command. `chains` is optional; leave it out for chain-agnostic issues.
 
 **The goal is for this database to become unnecessary.** Entries should be submitted upstream; when one is accepted, its `source` flips to `advisory` and `npm audit` starts catching it.
 
