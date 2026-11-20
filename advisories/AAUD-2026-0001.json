@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.6.0",
+  "id": "AAUD-2026-0001",
+  "aliases": [],
+  "related": ["GHSA-qr2g-p6q7-w82m"],
+  "published": "2026-10-22T00:00:00Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "x402 Solana facilitator accepts a token approval as a completed payment (payment bypass)",
+  "details": "The TypeScript Solana facilitator for the x402 `exact` scheme (v1 and v2) validated that a transaction invoked an allowed SPL token program, then parsed instruction[2] as `TransferChecked` **without checking the instruction discriminator**.\n\n`ApproveChecked` has an identical field layout to `TransferChecked` and differs only in its first byte (`0x0c` for TransferChecked, `0x0d` for ApproveChecked). Because the discriminator was never checked, the parser read an `ApproveChecked` instruction as a transfer, and read the *delegate* field as the payment destination — which allowed the destination check to pass.\n\nThe settlement path also skipped the post-settlement balance check. The net result: a payer could satisfy a payment requirement with an approval that **moved zero tokens**. The resource server delivered the paid resource and received nothing. The attacker needed an initialised token account but no balance, and the facilitator paid the transaction fee.\n\nThe security firm V12, which reported the issue, described it as \"a complete payment bypass\".\n\n## Who is affected\n\nFacilitators processing Solana payments with a vulnerable `@x402/svm`. This includes resource servers that self-facilitate. Clients are not affected.\n\n## Remediation\n\nUpgrade `@x402/svm` to 2.23.0 or later.",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/svm" },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [{ "introduced": "2.0.0" }, { "fixed": "2.23.0" }]
+        }
+      ]
+    }
+  ],
+  "references": [
+    { "type": "REPORT", "url": "https://v12.sh/blog/x402" },
+    {
+      "type": "ARTICLE",
+      "url": "https://thehackernews.com/2026/10/critical-x402-sdk-flaw-could-let.html"
+    },
+    { "type": "PACKAGE", "url": "https://www.npmjs.com/package/@x402/svm" }
+  ],
+  "database_specific": {
+    "severity": "CRITICAL",
+    "source": "derived",
+    "confidence": "high",
+    "has_upstream_advisory": false,
+    "npm_audit_detects": false,
+    "roles": ["facilitator", "resource-server"],
+    "impact_summary": "A payer can take the paid resource without transferring any tokens.",
+    "provenance": "Vulnerability detail and the instruction-discriminator mechanism are from V12's published research (v12.sh/blog/x402, 22 Oct 2026), which states the three critical findings were reported 12 Aug 2026 and fixed by 20 Aug 2026. The affected range 2.0.0-2.22.0 with the fix landing in 2.23.0 is as reported by The Hacker News (23 Oct 2026). No GHSA was published for this issue. Distinct from GHSA-qr2g-p6q7-w82m, which was published 7 Mar 2026 and fixed in 2.6.0; the ranges overlap below 2.6.0 but the issues are separate."
+  }
+}

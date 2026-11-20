@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.6.0",
+  "id": "AAUD-2026-0003",
+  "aliases": [],
+  "related": [],
+  "published": "2026-10-22T00:00:00Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "x402 Sign-In-With-X client signs login messages without binding them to the contacted origin",
+  "details": "The automated Sign-In-With-X (SIWx) client copied the `domain`, `uri` and related fields **directly from the 402 server response** into the message it signed, without checking them against the host it had actually contacted.\n\nA malicious data server could therefore relay a login challenge issued by a different site. V12's example: a request to `data.example` returns a challenge naming `app.example`. The agent signs it, and the relayed signature authenticates the agent's wallet as a session on `app.example`.\n\nThe result is session takeover on any site that accepts the relayed challenge.\n\n## Remediation\n\nUpgrade `@x402/extensions` to 2.23.0 or later, which refuses to sign unless the message origin matches the URL of the 402 response. The SIWx specification was also updated to require this check.",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/extensions" },
+      "ranges": [
+        { "type": "SEMVER", "events": [{ "introduced": "2.0.0" }, { "fixed": "2.23.0" }] }
+      ]
+    }
+  ],
+  "references": [
+    { "type": "REPORT", "url": "https://v12.sh/blog/x402" },
+    {
+      "type": "ARTICLE",
+      "url": "https://thehackernews.com/2026/10/critical-x402-sdk-flaw-could-let.html"
+    }
+  ],
+  "database_specific": {
+    "severity": "CRITICAL",
+    "source": "derived",
+    "confidence": "high",
+    "has_upstream_advisory": false,
+    "npm_audit_detects": false,
+    "roles": ["client"],
+    "impact_summary": "A hostile server can relay another site's login challenge and take over the agent's session there.",
+    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected package and fix version from The Hacker News (23 Oct 2026): '@x402/extensions 2.23.0 or later for SIWx'. No GHSA was published for this issue."
+  }
+}

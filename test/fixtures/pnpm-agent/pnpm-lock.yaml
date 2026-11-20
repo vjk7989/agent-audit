@@ -1,0 +1,39 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    dependencies:
+      '@x402/svm':
+        specifier: 2.22.0
+        version: 2.22.0
+      '@x402/fetch':
+        specifier: 2.22.0
+        version: 2.22.0
+
+packages:
+
+  '@x402/svm@2.22.0':
+    resolution: {integrity: sha512-placeholder}
+
+  '@x402/fetch@2.22.0':
+    resolution: {integrity: sha512-placeholder}
+
+  '@solana/kit@8.6.0':
+    resolution: {integrity: sha512-placeholder}
+
+  'semver@7.6.3':
+    resolution: {integrity: sha512-placeholder}
+
+snapshots:
+
+  '@x402/svm@2.22.0': {}
+
+  '@x402/fetch@2.22.0': {}
+
+  '@solana/kit@8.6.0': {}
+
+  'semver@7.6.3': {}

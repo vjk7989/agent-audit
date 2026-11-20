@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.6.0",
+  "id": "GHSA-qr2g-p6q7-w82m",
+  "aliases": ["GO-2026-4647"],
+  "related": ["AAUD-2026-0001"],
+  "published": "2026-03-07T02:37:47Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "x402 SDK Security Advisory (Solana facilitator, fixed in @x402/svm 2.6.0)",
+  "details": "Mirrored from the GitHub Advisory Database.\n\nA security vulnerability exists in outdated versions of the x402 SDK. Per the upstream advisory, it does not affect users' private keys, smart contracts, or funds.\n\nThe issue impacts resource servers accepting payments on Solana **when the facilitator is running a vulnerable version** of the x402 SDK.\n\n## Who should take action\n\nFacilitators that process payments on Solana must upgrade. Clients are not required to upgrade. Resource servers are not required to upgrade unless they operate their own facilitator (self-facilitate).\n\n## Patches\n\n- npm: `@x402/svm` >= 2.6.0\n- PyPI: `x402` >= 2.3.0\n- Go: `x402` >= 2.5.0\n\nOnly the npm package is matched by this tool. See `AAUD-2026-0001` for a separate, later Solana facilitator bypass that was fixed in 2.23.0 and has no upstream advisory.",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/svm" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "0" }, { "fixed": "2.6.0" }] }]
+    }
+  ],
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://github.com/advisories/GHSA-qr2g-p6q7-w82m"
+    },
+    { "type": "PACKAGE", "url": "https://www.npmjs.com/package/@x402/svm" }
+  ],
+  "database_specific": {
+    "severity": "HIGH",
+    "source": "advisory",
+    "confidence": "high",
+    "has_upstream_advisory": true,
+    "npm_audit_detects": true,
+    "roles": ["facilitator"],
+    "impact_summary": "Solana facilitators on a vulnerable SDK version mis-handle payment validation.",
+    "provenance": "Mirrored verbatim from the GitHub Advisory Database via api.github.com/advisories, retrieved 20 Nov 2026. Version ranges are as published upstream. Included so the report shows a complete picture alongside the derived entries."
+  }
+}

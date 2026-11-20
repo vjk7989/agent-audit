@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.6.0",
+  "id": "AAUD-2026-0004",
+  "aliases": [],
+  "related": ["AAUD-2026-0001"],
+  "published": "2026-09-01T00:00:00Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "Payment bypass in @x402/core fixed in 2.27.0 (September 2026)",
+  "details": "A payment bypass distinct from the three critical findings of August 2026 was fixed in `@x402/core` 2.27.0 in September 2026.\n\nThe mechanism has not been published in detail. It is recorded here because the fix shipped without a security advisory, so installations below 2.27.0 receive no warning from `npm audit` or any other standard tooling.\n\n## Confidence\n\n**Medium.** The existence of the fix and the fixed version are reported by The Hacker News; the lower bound of the affected range and the exact mechanism are not established. The range below assumes the issue was present from the start of the 2.x line, which may over-report. Treat a finding on this entry as a prompt to upgrade rather than as confirmation that a specific version is exploitable.\n\n## Remediation\n\nUpgrade `@x402/core` to 2.27.0 or later. Note that `AAUD-2026-0002` already requires 2.23.0+, so a single upgrade to the current release resolves both.",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/core" },
+      "ranges": [
+        { "type": "SEMVER", "events": [{ "introduced": "2.0.0" }, { "fixed": "2.27.0" }] }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "ARTICLE",
+      "url": "https://thehackernews.com/2026/10/critical-x402-sdk-flaw-could-let.html"
+    }
+  ],
+  "database_specific": {
+    "severity": "HIGH",
+    "source": "derived",
+    "confidence": "medium",
+    "has_upstream_advisory": false,
+    "npm_audit_detects": false,
+    "roles": ["client", "facilitator", "resource-server"],
+    "impact_summary": "An unspecified payment bypass was silently patched; versions below 2.27.0 are unverified.",
+    "provenance": "The Hacker News (23 Oct 2026) states 'A separate payment bypass was fixed in @x402/core 2.27.0 in September'. No mechanism, lower bound or advisory is published. The introduced bound of 2.0.0 is an assumption, hence medium confidence. Flagged for verification against the x402 repository commit history for September 2026."
+  }
+}

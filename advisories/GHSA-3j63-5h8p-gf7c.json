@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.6.0",
+  "id": "GHSA-3j63-5h8p-gf7c",
+  "aliases": [],
+  "related": [],
+  "published": "2025-08-20T20:51:55Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "x402 SDK vulnerable in outdated versions in resource servers (legacy v1 packages, fixed in 0.5.2)",
+  "details": "Mirrored from the GitHub Advisory Database.\n\nA security vulnerability exists in outdated versions of the x402 SDK. Per the upstream advisory, it does not directly affect users' keys, smart contracts, or funds. It primarily impacts builders working on resource servers.\n\nThis affects the **legacy v1 package line** (`x402`, `x402-next`, `x402-express`, `x402-hono`), which is superseded by the scoped `@x402/*` v2 packages. If you are still on these packages, migrating to the v2 line is the better remediation than pinning to 0.5.2.\n\n## Patches\n\n- `x402` >= 0.5.2\n- `x402-next` >= 0.5.2\n- `x402-express` >= 0.5.2\n- `x402-hono` >= 0.5.2",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "x402" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "0" }, { "fixed": "0.5.2" }] }]
+    },
+    {
+      "package": { "ecosystem": "npm", "name": "x402-next" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "0" }, { "fixed": "0.5.2" }] }]
+    },
+    {
+      "package": { "ecosystem": "npm", "name": "x402-express" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "0" }, { "fixed": "0.5.2" }] }]
+    },
+    {
+      "package": { "ecosystem": "npm", "name": "x402-hono" },
+      "ranges": [{ "type": "SEMVER", "events": [{ "introduced": "0" }, { "fixed": "0.5.2" }] }]
+    }
+  ],
+  "references": [
+    { "type": "ADVISORY", "url": "https://github.com/advisories/GHSA-3j63-5h8p-gf7c" }
+  ],
+  "database_specific": {
+    "severity": "HIGH",
+    "source": "advisory",
+    "confidence": "high",
+    "has_upstream_advisory": true,
+    "npm_audit_detects": true,
+    "roles": ["resource-server"],
+    "impact_summary": "Legacy v1 resource-server packages below 0.5.2 carry a known vulnerability.",
+    "provenance": "Mirrored from the GitHub Advisory Database via OSV (api.osv.dev/v1/vulns/GHSA-3j63-5h8p-gf7c), retrieved 20 Nov 2026. Version ranges are as published upstream."
+  }
+}

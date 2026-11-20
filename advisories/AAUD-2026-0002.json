@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.6.0",
+  "id": "AAUD-2026-0002",
+  "aliases": [],
+  "related": [],
+  "published": "2026-10-22T00:00:00Z",
+  "modified": "2026-11-20T00:00:00Z",
+  "summary": "x402 client has no default spending limit, allowing a hostile server to request a wallet's full balance",
+  "details": "The documented default x402 client **selected the first supported payment option offered by the server without applying any spending policy**. A malicious or compromised resource server could therefore respond to a request with a payment requirement for the entire balance of any supported token in the agent's wallet, and an agent configured to pay automatically would sign it.\n\nThe server could first discover the wallet address through an earlier small, legitimate payment, then look up the balance on-chain before quoting the inflated amount.\n\nThe HTTP decoding path also parsed payment requirements without invoking the schema validator. V12 notes that schema validation alone would not have prevented the spending issue — the missing control is an explicit budget.\n\nThis is the highest-impact of the three critical findings for anyone running an autonomous agent that pays without a human in the loop.\n\n## Remediation\n\nUpgrade the client packages to 2.23.0 or later. From that release the defaults cap each payment at $1 and permit only recognised USD stablecoins.\n\n**Note:** passing `spendControls: false` disables these defaults. If your code sets that flag, upgrading does not protect you — you must enforce your own per-payment and total budgets, plus allowed tokens, networks and recipients.",
+  "severity": [],
+  "affected": [
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/fetch" },
+      "ranges": [
+        { "type": "SEMVER", "events": [{ "introduced": "2.0.0" }, { "fixed": "2.23.0" }] }
+      ]
+    },
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/axios" },
+      "ranges": [
+        { "type": "SEMVER", "events": [{ "introduced": "2.0.0" }, { "fixed": "2.23.0" }] }
+      ]
+    },
+    {
+      "package": { "ecosystem": "npm", "name": "@x402/core" },
+      "ranges": [
+        { "type": "SEMVER", "events": [{ "introduced": "2.0.0" }, { "fixed": "2.23.0" }] }
+      ]
+    }
+  ],
+  "references": [
+    { "type": "REPORT", "url": "https://v12.sh/blog/x402" },
+    {
+      "type": "ARTICLE",
+      "url": "https://thehackernews.com/2026/10/critical-x402-sdk-flaw-could-let.html"
+    }
+  ],
+  "database_specific": {
+    "severity": "CRITICAL",
+    "source": "derived",
+    "confidence": "high",
+    "has_upstream_advisory": false,
+    "npm_audit_detects": false,
+    "roles": ["client"],
+    "impact_summary": "A hostile API can drain the agent wallet's full balance of any supported token.",
+    "provenance": "Mechanism from V12's published research (v12.sh/blog/x402, 22 Oct 2026). Affected packages and the 2.23.0 fix version are as reported by The Hacker News (23 Oct 2026), which states '@x402/fetch and @x402/axios 2.23.0 or later (pulls in matching @x402/core)'. @x402/core is included because the shared client logic and the spend-control defaults ship there. No GHSA was published for this issue."
+  }
+}

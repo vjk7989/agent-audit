@@ -1,0 +1,57 @@
+{
+  "name": "agent-audit",
+  "version": "0.1.0",
+  "description": "npm audit for agentic payment SDKs. Finds vulnerable x402 dependencies that npm audit reports as clean.",
+  "keywords": [
+    "x402",
+    "security",
+    "audit",
+    "agentic-payments",
+    "ai-agents",
+    "solana",
+    "vulnerability-scanner",
+    "sca",
+    "osv",
+    "supply-chain"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "agent-audit": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "advisories",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "semver": "^7.6.3",
+    "yaml": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "@types/semver": "^7.5.8",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
+  }
+}
