@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-audit: npm audit for agentic payment SDKs</title>
+<meta name="description" content="Finds known-vulnerable versions of x402 and related agent-payment packages in your lockfile, including vulnerabilities with no published advisory.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>npm audit for agentic payment SDKs.</h1>
+  <p class="lead">agent-audit finds known-vulnerable versions of x402 and related agent-payment packages in your lockfile, including the vulnerabilities that have <strong>no published advisory</strong>, which <code>npm audit</code> therefore reports as clean.</p>
+  <div class="cmd"><pre><code><span class="prompt">$</span> npx agent-audit</code></pre></div>
+  <!-- REPO LINK: add the repository link here once the repository is public. No external links until then. -->
+</header>
+<main>
+
+<section id="problem">
+  <h2>The problem</h2>
+  <p>In October 2026 the security firm V12 published research on x402 reporting 25 vulnerabilities, 3 critical and 13 high, disclosed on 12 August 2026 and fixed by 20 August. The three criticals were:</p>
+  <ol>
+    <li><strong>Solana payment bypass.</strong> The TypeScript Solana facilitator accepted a token approval (<code>ApproveChecked</code>) as a <code>TransferChecked</code> payment. An approval moving zero tokens was accepted as payment: the resource was delivered and nothing was paid.</li>
+    <li><strong>No default spending limit.</strong> The default client took the first payment option a server offered, with no budget. A hostile API could request the agent wallet's entire balance.</li>
+    <li><strong>SIWx origin binding.</strong> The client signed Sign-In-With-X messages without checking that the named domain matched the host contacted, allowing session takeover by relay.</li>
+  </ol>
+  <p>All three were fixed in <code>2.23.0</code>. <strong>None of them received a security advisory.</strong> Queried against OSV.dev on 20 Nov 2026, <code>@x402/core</code>, <code>@x402/fetch</code>, <code>@x402/axios</code> and <code>@x402/extensions</code> have no advisories at all.</p>
+  <p>There is a second case. <code>GHSA-5cgh-j82v-jvrj</code> is listed on the x402 repository's own advisories page (published 18 Nov 2026), but it returns 404 from GitHub's global advisory API and nothing from OSV. It is a repository-level advisory that never propagated to the databases <code>npm audit</code> reads.</p>
+  <p>This is not a criticism of the x402 maintainers, who ship fixes quickly. It is a gap in how security information reaches the people running the code.</p>
+</section>
+
+<section id="contrast">
+  <h2>Same project, same moment</h2>
+  <div class="panels">
+    <div class="panel">
+      <h3>npm audit</h3>
+      <!-- T9: replace this placeholder with real CLI output -->
+      <pre><code><span class="prompt">$</span> npm audit
+<span class="ok">found 0 vulnerabilities</span></code></pre>
+    </div>
+    <div class="panel">
+      <h3>agent-audit</h3>
+      <!-- T9: replace this placeholder with real CLI output -->
+      <pre><code><span class="prompt">$</span> npx agent-audit
+<span class="crit">5 findings (4 critical, 1 high)</span>
+<span class="dim">5 of these are invisible to npm audit.</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="coverage">
+  <h2>Chain coverage</h2>
+  <p>Each advisory declares the chain it concerns, or none when the issue is not chain-specific.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Chain</th><th>Package</th><th>Advisories</th></tr></thead>
+    <tbody>
+      <tr><td>Solana</td><td><code>@x402/svm</code></td><td><code>AAUD-2026-0001</code>, <code>GHSA-qr2g-p6q7-w82m</code></td></tr>
+      <tr><td>EVM</td><td><code>@x402/evm</code></td><td><code>GHSA-5cgh-j82v-jvrj</code></td></tr>
+      <tr><td>Both (no chain declared)</td><td><code>@x402/core</code>, <code>@x402/fetch</code>, <code>@x402/axios</code>, <code>@x402/extensions</code>, legacy <code>x402</code>, <code>x402-next</code>, <code>x402-express</code>, <code>x402-hono</code></td><td><code>AAUD-2026-0002</code>, <code>AAUD-2026-0003</code>, <code>AAUD-2026-0004</code>, <code>GHSA-3j63-5h8p-gf7c</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="no-fix">
+  <div class="callout">
+    <h2>No fix available: GHSA-5cgh-j82v-jvrj</h2>
+    <p>The TypeScript, Go and Python batch-settlement voucher verifiers accept ECDSA signatures that the on-chain <code>x402BatchSettlement</code> contract rejects (high-s, <code>v</code> = 0/1). The voucher verifies, the resource is served, and the later claim reverts. Severity Moderate, CVSS 3.1 5.4, CWE-347, no CVE.</p>
+    <p>It affects <code>@x402/evm</code> <code>&gt;= 2.12.0, &lt;= 2.31.0</code>. <strong>Patched: None.</strong> <code>2.31.0</code> is the latest release on npm (published 2026-11-12), so a fully up-to-date install is still vulnerable. <code>npm audit</code> cannot see it.</p>
+    <p>Mitigation (this tool's own guidance, not an upstream workaround): reject non-canonical ECDSA signatures before accepting a voucher, requiring <code>s &lt;= n/2</code> and <code>v</code> in {27, 28}.</p>
+  </div>
+</section>
+
+<section id="provenance">
+  <h2>The provenance rule</h2>
+  <p>A security tool that invents findings is worse than no tool. Every entry declares where its facts came from, and the report shows it.</p>
+  <ul>
+    <li><code>source: "advisory"</code>: mirrored from a published GHSA/OSV record. Ranges are upstream's.</li>
+    <li><code>source: "derived"</code>: reconstructed from published research, changelogs or commit history because no advisory exists. It must carry a <code>provenance</code> field explaining how the range was established, and a <code>confidence</code> rating: <strong>high</strong>, <strong>medium</strong> or <strong>low</strong>.</li>
+  </ul>
+  <p>The CLI prints the confidence on any entry that is not high, and a test enforces that every derived entry documents its provenance. The goal is for this database to become unnecessary: entries should be submitted upstream, and once accepted, <code>npm audit</code> starts catching them.</p>
+</section>
+
+<section id="usage">
+  <h2>Usage</h2>
+  <pre><code>npx agent-audit                          <span class="dim"># scan the current directory</span>
+agent-audit ./my-agent               <span class="dim"># scan a specific project</span>
+agent-audit --role client            <span class="dim"># only issues affecting payment clients</span>
+agent-audit --min-severity critical  <span class="dim"># only the worst</span>
+agent-audit --only-hidden            <span class="dim"># only what npm audit cannot see</span>
+agent-audit --json                   <span class="dim"># machine-readable output</span></code></pre>
+  <p>Supports <code>package-lock.json</code>, <code>pnpm-lock.yaml</code>, <code>yarn.lock</code> (classic and Berry) and <code>bun.lock</code>. Requires Node 20+. Exit code <code>0</code> for no findings, <code>1</code> for findings, <code>2</code> for an error, so it drops into CI as-is:</p>
+  <pre><code>- run: npx agent-audit --min-severity high</code></pre>
+</section>
+
+<section id="limitations">
+  <h2>Limitations</h2>
+  <p>Stated plainly, because a security tool should not oversell itself.</p>
+  <ul>
+    <li><strong>npm only.</strong> The same vulnerabilities affect the Python and Go x402 SDKs. Not yet covered.</li>
+    <li><strong>Version matching, not code analysis.</strong> If you patched a vulnerability yourself without upgrading, or call a vulnerable API in a way that is not exploitable, it will still flag you.</li>
+    <li><strong>The database is small and hand-curated.</strong> It covers what has been published about x402.</li>
+    <li><strong>Not affiliated</strong> with the x402 Foundation, Coinbase, V12 or the Solana Foundation.</li>
+  </ul>
+</section>
+
+</main>
+<footer>
+  <p>MIT licensed.</p>
+</footer>
+</body>
+</html>
