@@ -6,7 +6,7 @@ import { loadAdvisories } from "./db.js";
 import { scanLockfile } from "./lockfiles.js";
 import { matchAdvisories } from "./match.js";
 import { renderJson, renderText } from "./report.js";
-import type { Role, ScanResult, Severity } from "./types.js";
+import type { Chain, Role, ScanResult, Severity } from "./types.js";
 
 const HELP = `
 agent-audit — npm audit for agentic payment SDKs
@@ -25,6 +25,8 @@ Options
   --json                  Emit machine-readable JSON
   --role <role>           Only report issues affecting this role.
                           One of: client, facilitator, resource-server
+  --chain <chain>         Only report issues affecting this chain.
+                          One of: evm, solana
   --min-severity <level>  Drop findings below this level.
                           One of: low, moderate, high, critical
   --only-hidden           Only report findings npm audit cannot see
@@ -41,18 +43,21 @@ Examples
   agent-audit
   agent-audit ./my-agent --role client
   agent-audit --only-hidden --json
+  agent-audit ./my-agent --chain solana
 `;
 
 interface Options {
   path: string;
   json: boolean;
   role?: Role;
+  chain?: Chain;
   minSeverity?: Severity;
   onlyHidden: boolean;
   exitZero: boolean;
 }
 
 const ROLES: Role[] = ["client", "facilitator", "resource-server"];
+const CHAINS: Chain[] = ["evm", "solana"];
 const SEVERITIES: Severity[] = ["LOW", "MODERATE", "HIGH", "CRITICAL"];
 
 function fail(message: string): never {
@@ -119,6 +124,14 @@ function parseArgs(argv: string[]): Options {
         options.role = value as Role;
         break;
       }
+      case "--chain": {
+        const value = argv[++i];
+        if (!value || !CHAINS.includes(value as Chain)) {
+          fail(`--chain must be one of: ${CHAINS.join(", ")}`);
+        }
+        options.chain = value as Chain;
+        break;
+      }
       case "--min-severity": {
         const value = argv[++i]?.toUpperCase();
         if (!value || !SEVERITIES.includes(value as Severity)) {
@@ -148,6 +161,7 @@ function main(): void {
     const target = scanLockfile(options.path);
     const matchOptions = {
       ...(options.role ? { role: options.role } : {}),
+      ...(options.chain ? { chain: options.chain } : {}),
       ...(options.minSeverity ? { minSeverity: options.minSeverity } : {}),
     };
     result = matchAdvisories(target, advisories, matchOptions);
